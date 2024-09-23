@@ -270,9 +270,8 @@ dependencies {
    
     //implementation rfg.deobf("codechicken:CodeChickenLib:1.12-3.1.5.330:universal")
     implementation rfg.deobf("curse.maven:the-one-probe-community-edition-885670:5485686")
-    //implementation rfg.deobf("curse.maven:mcmultipart-239431:2615930")
     implementation rfg.deobf("curse.maven:jei-238222:5101347")
-    implementation "com.mod-buildcraft:buildcraft-api:7.99.24.6:"
+    implementation "com.mod-buildcraft:buildcraft-all:7.99.24.6:"
     implementation rfg.deobf('net.industrial-craft:industrialcraft-2:2.8.222-ex112')
     implementation rfg.deobf('curse.maven:HadEnoughItems-557549:5471944')
     implementation rfg.deobf('curse.maven:EnderStorage-245174:2755787')
@@ -283,7 +282,6 @@ dependencies {
     implementation group: 'cofh', name: 'CoFHWorld', version: '1.12.2-1.2.0.5', classifier: 'deobf', transitive: false
     implementation group: 'cofh', name: 'ThermalDynamics', version: '1.12.2-2.5.5.21', classifier: 'deobf', transitive: false
     implementation group: 'cofh', name: 'ThermalExpansion', version: '1.12.2-5.5.4.43', classifier: 'deobf', transitive: false
-    implementation rfg.deobf("MCMultiPart2:MCMultiPart:2.5.4")
 
     implementation rfg.deobf('curse.maven:cc-tweaked-282001:2992872')
     implementation rfg.deobf("curse.maven:storage-drawers-223852:5612980")
