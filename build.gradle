@@ -58,7 +58,7 @@ configurations {
     implementation.extendsFrom(embed)
     testCompileOnly.extendsFrom compileOnly
     ktlint
-    configDummy.extendsFrom(implementation)
+    resolveable.extendsFrom(implementation).canBeResolved(true)
 }
 
 sourceSets {
@@ -68,8 +68,8 @@ sourceSets {
         }
     }
     dummy {
-        compileClasspath = configurations.configDummy
-        runtimeClasspath = configurations.configDummy
+        compileClasspath = main.compileClasspath
+//        runtimeClasspath += minecraft
 
         java {
             srcDirs = ['dummy/src/main/java']
