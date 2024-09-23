@@ -53,6 +53,14 @@ base {
 
 tasks.decompressDecompiledSources.enabled !propertyBool('change_minecraft_sources')
 
+configurations {
+    embed
+    implementation.extendsFrom(embed)
+    testCompileOnly.extendsFrom compileOnly
+    ktlint
+    configDummy.extendsFrom(implementation)
+}
+
 sourceSets {
     api {
         java {
@@ -60,6 +68,9 @@ sourceSets {
         }
     }
     dummy {
+        compileClasspath = configurations.configDummy
+        runtimeClasspath = configurations.configDummy
+
         java {
             srcDirs = ['dummy/src/main/java']
         }
@@ -107,13 +118,6 @@ java {
     if (propertyBool('generate_javadocs_jar')) {
         withJavadocJar()
     }
-}
-
-configurations {
-    embed
-    implementation.extendsFrom(embed)
-    testCompileOnly.extendsFrom compileOnly
-    ktlint
 }
 
 /*
