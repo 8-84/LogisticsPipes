@@ -68,8 +68,8 @@ sourceSets {
         }
     }
     dummy {
-        compileClasspath = main.compileClasspath
-//        runtimeClasspath += minecraft
+        compileClasspath += main.compileClasspath
+        runtimeClasspath += main.runtimeClasspath
 
         java {
             srcDirs = ['dummy/src/main/java']
@@ -219,7 +219,7 @@ repositories {
 
 dependencies {
     
-    implementation fileTree(dir: 'libs', include: '*.jar')
+    implementation rfg.deobf(fileTree(dir: 'libs', include: '*.jar'))
 
     if (propertyBool('use_modern_java_syntax')) {
         annotationProcessor 'com.github.bsideup.jabel:jabel-javac-plugin:1.0.0'

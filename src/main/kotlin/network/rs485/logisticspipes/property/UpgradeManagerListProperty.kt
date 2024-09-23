@@ -76,6 +76,7 @@ class UpgradeManagerListProperty : ListProperty<ModuleUpgradeManager> {
         // TODO: check possibility of a generalized ListProperty of Property
         val propertiesToUnobserve: MutableSet<Property<*>> = subProperties.toMutableSet()
         list.forEach {
+
             if (!propertiesToUnobserve.remove(it.inv)) {
                 it.inv.addObserver(this::contentObserver)
                 subProperties.add(it.inv)
