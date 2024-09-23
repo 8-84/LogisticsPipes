@@ -265,10 +265,12 @@ dependencies {
     implementation group: 'com.charleskorn.kaml', name: 'kaml', version: kaml_version
     implementation "javax.xml.bind:jaxb-api:2.3.1"
     implementation "org.glassfish.jaxb:jaxb-runtime:2.3.1"
+    implementation 'org.projectlombok:lombok:1.18.20'
+    annotationProcessor 'org.projectlombok:lombok:1.18.20'
    
     //implementation rfg.deobf("codechicken:CodeChickenLib:1.12-3.1.5.330:universal")
     implementation rfg.deobf("curse.maven:the-one-probe-community-edition-885670:5485686")
-    implementation rfg.deobf("curse.maven:mcmultipart-239431:2615930")
+    //implementation rfg.deobf("curse.maven:mcmultipart-239431:2615930")
     implementation rfg.deobf("curse.maven:jei-238222:5101347")
     implementation "com.mod-buildcraft:buildcraft-api:7.99.24.6:"
     implementation rfg.deobf('net.industrial-craft:industrialcraft-2:2.8.222-ex112')
@@ -303,7 +305,7 @@ if (propertyBool('use_access_transformer')) {
 }
 
 processResources {
-
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
     def filterList = ['mcmod.info', 'pack.mcmeta']
     filterList.addAll(propertyStringList('mixin_configs').collect(config -> "mixins.${config}.json" as String))
 
@@ -330,6 +332,7 @@ processResources {
 }
 
 jar {
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
     manifest {
         from sourceSets.api.output
 //        finalizedBy 'shadowJar'
