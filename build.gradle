@@ -283,6 +283,7 @@ dependencies {
     implementation group: 'cofh', name: 'CoFHWorld', version: '1.12.2-1.2.0.5', classifier: 'deobf', transitive: false
     implementation group: 'cofh', name: 'ThermalDynamics', version: '1.12.2-2.5.5.21', classifier: 'deobf', transitive: false
     implementation group: 'cofh', name: 'ThermalExpansion', version: '1.12.2-5.5.4.43', classifier: 'deobf', transitive: false
+    implementation rfg.deobf("MCMultiPart2:MCMultiPart:2.5.4")
 
     implementation rfg.deobf('curse.maven:cc-tweaked-282001:2992872')
     implementation rfg.deobf("curse.maven:storage-drawers-223852:5612980")
