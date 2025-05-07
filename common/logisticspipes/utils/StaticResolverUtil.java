@@ -42,12 +42,29 @@ public class StaticResolverUtil {
 
 	@Nullable
 	private static Class<?> loadClass(@Nonnull String classPathSpec) {
-		try {
-			return LogisticsPipes.class.getClassLoader().loadClass(classPathSpec);
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-			return null;
+		int count = 0;
+		while(count <= 10){
+			try {
+				Class.forName(classPathSpec, false, LogisticsPipes.class.getClassLoader());
+			} catch (ClassNotFoundException e) {
+				count++;
+				try{
+					Thread.sleep(6000);
+					continue;
+				} catch (InterruptedException f) {
+					f.printStackTrace();
+					break;
+				}
+			} finally {
+				try{
+					return LogisticsPipes.class.getClassLoader().loadClass(classPathSpec);
+				}catch (ClassNotFoundException g) {
+					g.printStackTrace();
+				}
+				
+			}
 		}
+		return null;
 	}
 
 }

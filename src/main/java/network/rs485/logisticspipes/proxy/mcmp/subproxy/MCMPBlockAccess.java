@@ -21,6 +21,7 @@
 package network.rs485.logisticspipes.proxy.mcmp.subproxy;
 
 import java.util.List;
+import java.util.Objects;
 
 import net.minecraft.block.Block;
 import net.minecraft.block.state.BlockStateContainer;
@@ -40,7 +41,9 @@ import mcmultipart.block.BlockMultipartContainer;
 
 public class MCMPBlockAccess implements IMCMPBlockAccess {
 
-	private final BlockMultipartContainer multipart = (BlockMultipartContainer) MCMultiPart.multipart;
+    //multipart is null when MCMPBlockAccess is initialized.
+
+	private BlockMultipartContainer multipart = (BlockMultipartContainer) MCMultiPart.multipart;
 
 	@Override
 	public void addBlockState(BlockStateContainer.Builder builder) {
@@ -49,27 +52,32 @@ public class MCMPBlockAccess implements IMCMPBlockAccess {
 
 	@Override
 	public IBlockState getExtendedState(IBlockState state, IBlockAccess worldIn, BlockPos pos) {
+        multipart = (BlockMultipartContainer) MCMultiPart.multipart;
 		return multipart.getExtendedState(state, worldIn, pos);
 	}
 
 	@Override
 	public void addCollisionBoxToList(IBlockState state, World world, BlockPos pos, AxisAlignedBB entityBox, List<AxisAlignedBB> collidingBoxes, Entity entity,
 			boolean isActualState) {
+        multipart = (BlockMultipartContainer) MCMultiPart.multipart;
 		multipart.addCollisionBoxToList(state, world, pos, entityBox, collidingBoxes, entity, isActualState);
 	}
 
 	@Override
 	public RayTraceResult collisionRayTrace(IBlockState state, World world, BlockPos pos, Vec3d start, Vec3d end) {
+        multipart = (BlockMultipartContainer) MCMultiPart.multipart;
 		return multipart.collisionRayTrace(state, world, pos, start, end);
 	}
 
 	@Override
 	public Block getBlock() {
-		return multipart;
+        multipart = (BlockMultipartContainer) MCMultiPart.multipart;
+        return multipart;
 	}
 
 	@Override
 	public void addDrops(NonNullList<ItemStack> list, IBlockAccess world, BlockPos pos, IBlockState state, int fortune) {
+        multipart = (BlockMultipartContainer) MCMultiPart.multipart;
 		list.addAll(multipart.getDrops(world, pos, state, fortune));
 	}
 }

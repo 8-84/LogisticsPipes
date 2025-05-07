@@ -91,6 +91,8 @@ sourceSets {
         compileClasspath += dummy.output
         compileClasspath += api.output
         runtimeClasspath += api.output
+        compileClasspath += main.compileClasspath
+        runtimeClasspath += main.runtimeClasspath
     }
 }
 
@@ -120,20 +122,18 @@ java {
     }
 }
 
-/*
+
 project.afterEvaluate {
     tasks.register('copyRunClasses', Copy.class) {
         dependsOn ['classes']
         from sourceSets.main.output.classesDirs, sourceSets.main.output.resourcesDir, sourceSets.api.output.classesDirs
         into "${project.buildDir}/run_classes/"
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+        duplicatesStrategy = DuplicatesStrategy.INCLUDE
 
         includeEmptyDirs false
     }
-
-    tasks['prepareRuns'].dependsOn('copyRunClasses')
 }
-*/
+
 
 minecraft {
     mcVersion.set('1.12.2')
@@ -218,8 +218,8 @@ repositories {
 }
 
 dependencies {
-    
-    implementation rfg.deobf(fileTree(dir: 'libs', include: '*.jar'))
+
+    compileOnly rfg.deobf(fileTree(dir: 'libs', include: '*.jar'))
 
     if (propertyBool('use_modern_java_syntax')) {
         annotationProcessor 'com.github.bsideup.jabel:jabel-javac-plugin:1.0.0'
@@ -270,22 +270,26 @@ dependencies {
    
     //implementation rfg.deobf("codechicken:CodeChickenLib:1.12-3.1.5.330:universal")
     implementation rfg.deobf("curse.maven:the-one-probe-community-edition-885670:5485686")
-    implementation rfg.deobf("curse.maven:jei-238222:5101347")
-    implementation "com.mod-buildcraft:buildcraft-all:7.99.24.6:"
-    implementation rfg.deobf('net.industrial-craft:industrialcraft-2:2.8.222-ex112')
-    implementation rfg.deobf('curse.maven:HadEnoughItems-557549:5471944')
-    implementation rfg.deobf('curse.maven:EnderStorage-245174:2755787')
-    implementation rfg.deobf('li.cil.oc:OpenComputers:MC1.12.2-1.7.5.221')
-    implementation 'cofh:CoFHCore:1.12.2-4.6.3.27:deobf'
-    implementation 'cofh:RedstoneFlux:1.12-2.1.0.7:deobf'
-    implementation group: 'cofh', name: 'ThermalFoundation', version: '1.12.2-2.6.3.27', classifier: 'deobf', transitive: false
-    implementation group: 'cofh', name: 'CoFHWorld', version: '1.12.2-1.2.0.5', classifier: 'deobf', transitive: false
-    implementation group: 'cofh', name: 'ThermalDynamics', version: '1.12.2-2.5.5.21', classifier: 'deobf', transitive: false
-    implementation group: 'cofh', name: 'ThermalExpansion', version: '1.12.2-5.5.4.43', classifier: 'deobf', transitive: false
+    compileOnly rfg.deobf("curse.maven:jei-238222:5101347")
+    compileOnly "com.mod-buildcraft:buildcraft-all:7.99.24.6:"
+    compileOnly rfg.deobf('net.industrial-craft:industrialcraft-2:2.8.222-ex112')
+    //implementation rfg.deobf('curse.maven:HadEnoughItems-557549:5471944')
+    compileOnly rfg.deobf('curse.maven:EnderStorage-245174:2755787')
+    //implementation rfg.deobf('li.cil.oc:OpenComputers:MC1.12.2-1.7.5.221')
+    compileOnly 'cofh:CoFHCore:1.12.2-4.6.3.27:deobf'
+    compileOnly 'cofh:RedstoneFlux:1.12-2.1.0.7:deobf'
+    compileOnly group: 'cofh', name: 'ThermalFoundation', version: '1.12.2-2.6.3.27', classifier: 'deobf', transitive: false
+    compileOnly group: 'cofh', name: 'CoFHWorld', version: '1.12.2-1.2.0.5', classifier: 'deobf', transitive: false
+    compileOnly group: 'cofh', name: 'ThermalDynamics', version: '1.12.2-2.5.5.21', classifier: 'deobf', transitive: false
+    compileOnly group: 'cofh', name: 'ThermalExpansion', version: '1.12.2-5.5.4.43', classifier: 'deobf', transitive: false
 
-    implementation rfg.deobf('curse.maven:cc-tweaked-282001:2992872')
-    implementation rfg.deobf("curse.maven:storage-drawers-223852:5612980")
-    implementation rfg.deobf("curse.maven:charset-lib-284523:3656492")
+    compileOnly rfg.deobf('curse.maven:cc-tweaked-282001:2992872')
+    compileOnly rfg.deobf("curse.maven:storage-drawers-223852:5612980")
+    compileOnly rfg.deobf("curse.maven:charset-lib-284523:3656492")
+
+    testImplementation 'org.jetbrains.kotlin:kotlin-test'
+    testImplementation 'org.jetbrains.kotlin:kotlin-test-junit5'
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.4.2'
 }
 
 apply from: 'gradle/scripts/dependencies.gradle'
@@ -331,11 +335,9 @@ processResources {
 }
 
 jar {
-    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+    from sourceSets.api.output
+    duplicatesStrategy = DuplicatesStrategy.WARN
     manifest {
-        from sourceSets.api.output
-//        finalizedBy 'shadowJar'
-        duplicatesStrategy = DuplicatesStrategy.WARN
         def attribute_map = [:]
         if (propertyBool('is_coremod')) {
             attribute_map['FMLCorePlugin'] = propertyString('coremod_plugin_class_name')
@@ -354,6 +356,12 @@ jar {
     }
     // Add all embedded dependencies into the jar
     from(provider{ configurations.embed.collect {it.isDirectory() ? it : zipTree(it)} })
+}
+
+task sourceJar(type: Jar) {
+    from sourceSets.api.allSource
+    from sourceSets.main.allSource
+    archiveClassifier.set('sources')
 }
 
 idea {
@@ -469,6 +477,10 @@ tasks.named('injectTags', InjectTagsTask).configure {
 
 tasks.named('prepareObfModsFolder').configure {
     finalizedBy 'prioritizeCoremods'
+}
+
+tasks.named('sourcesJar').configure{
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
 }
 
 tasks.register('prioritizeCoremods') {
