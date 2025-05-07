@@ -1,7 +1,7 @@
 /**
  * It is advised that you do not edit anything in the build.gradle; unless you are sure of what you are doing
  */
-import com.gtnewhorizons.retrofuturagradle.mcp.InjectTagsTask
+//import com.gtnewhorizons.retrofuturagradle.mcp.InjectTagsTask
 import org.jetbrains.changelog.Changelog
 import org.jetbrains.gradle.ext.Gradle
 
@@ -13,10 +13,13 @@ plugins {
     id 'org.jetbrains.kotlin.plugin.serialization' version "$kotlin_version"
     id 'org.jetbrains.kotlin.plugin.lombok' version "$kotlin_version"
     id 'org.jetbrains.gradle.plugin.idea-ext' version '1.1.7'
-    id 'com.gtnewhorizons.retrofuturagradle' version '1.3.35'
-    id 'com.matthewprenger.cursegradle' version '1.4.0' apply false
-    id 'com.modrinth.minotaur' version '2.+' apply false
+//    id 'com.gtnewhorizons.retrofuturagradle' version '1.3.35'
+//    id 'com.matthewprenger.cursegradle' version '1.4.0' apply false
+//    id 'com.modrinth.minotaur' version '2.+' apply false
     id 'org.jetbrains.changelog' version '2.2.0'
+    id 'xyz.wagyourtail.unimined' version '1.3.14'
+    id 'net.kyori.blossom' version '2.1.0'
+//    id "net.bytebuddy.byte-buddy-gradle-plugin" version "1.17.5"
 }
 
 apply from: 'gradle/scripts/helpers.gradle'
@@ -26,6 +29,10 @@ assertProperty 'mod_version'
 assertProperty 'root_package'
 assertProperty 'mod_id'
 assertProperty 'mod_name'
+
+if (propertyBool('generate_reference_class')) {
+    generateReferenceClass()
+}
 
 assertSubProperties 'use_tags', 'tag_class_name'
 assertSubProperties 'use_access_transformer', 'access_transformer_locations'
@@ -51,11 +58,13 @@ base {
     archivesName.set(propertyString('mod_id'))
 }
 
-tasks.decompressDecompiledSources.enabled !propertyBool('change_minecraft_sources')
+//tasks.decompressDecompiledSources.enabled !propertyBool('change_minecraft_sources')
 
 configurations {
     embed
+    contain
     implementation.extendsFrom(embed)
+//    implementation.extendsFrom(contain)
     testCompileOnly.extendsFrom compileOnly
     ktlint
     resolveable.extendsFrom(implementation).canBeResolved(true)
@@ -98,8 +107,8 @@ sourceSets {
 
 tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
     kotlinOptions {
-        languageVersion = "1.7"
-        jvmTarget = JavaVersion.VERSION_1_8
+        languageVersion = "2.1"
+        jvmTarget = '21'
         freeCompilerArgs += "-Xjvm-default=all"
     }
 }
@@ -110,9 +119,7 @@ kotlinLombok {
 
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(propertyBool('use_modern_java_syntax') ? 16 : 8))
-        // Azul covers the most platforms for Java 8 toolchains, crucially including MacOS arm64
-        vendor.set(JvmVendorSpec.AZUL)
+        languageVersion.set(JavaLanguageVersion.of(21))
     }
     if (propertyBool('generate_sources_jar')) {
         withSourcesJar()
@@ -134,7 +141,35 @@ project.afterEvaluate {
     }
 }
 
+unimined.minecraft {
+    version "1.12.2"
+//    side "combined"
+    mappings {
+        mcp("stable", "39-1.12")
+    }
 
+    cleanroom {
+        if (propertyBool('use_access_transformer')) {
+            accessTransformer "${rootProject.projectDir}/src/main/resources/" +  propertyString('access_transformer_locations')
+        }
+        loader "0.3.2-alpha"
+        runs.auth.username = minecraft_username
+        runs.config("client", {args += extra_jvm_args.split(" ")})
+        runs.config("server", {args += extra_jvm_args.split(" ")})
+        runs.all {
+            if (hasProperty("extra_jvm_args")) {
+                jvmArgs(propertyString('extra_jvm_args'))
+            }
+            if (propertyBool('enable_foundation_debug')) {
+                systemProperty("foundation.dump", "true")
+                systemProperty("foundation.verbose", "true")
+            }
+            return
+        }
+    }
+}
+
+/*
 minecraft {
     mcVersion.set('1.12.2')
 
@@ -144,7 +179,7 @@ minecraft {
     useDependencyAccessTransformers.set(propertyBool('use_dependency_at_files'))
 
     username.set(propertyString('minecraft_username'))
-    
+
     // Add any additional tweaker classes here
     extraTweakClasses.addAll(propertyStringList('extra_tweak_classes'))
 
@@ -167,13 +202,15 @@ minecraft {
         }
     }
 }
+*/
+
 
 repositories {
     maven {
         name 'Cleanroom Maven'
-        url 'https://maven.cleanroommc.com/'
+        url 'https://maven.cleanroommc.com'
     }
-    maven {url "https://repo.cleanroommc.com/snapshots"}
+//    maven {url "https://repo.cleanroommc.com/snapshots"}
     maven {url "https://maven.outlands.top/releases/" }
     maven {url "https://mod-buildcraft.com/maven/" }
     maven {url "https://maven.cil.li/"}
@@ -181,7 +218,7 @@ repositories {
     maven {url "https://maven.blamejared.com/"}
 
 
-    
+
     maven {
         url "https://cursemaven.com"
         content {
@@ -196,8 +233,8 @@ repositories {
         name "tterrag" //EnderCore
         url "https://maven.tterrag.com/"
     }
-
-    maven { 
+/*
+    maven {
         url "http://maven.amadornes.com/"
         allowInsecureProtocol = true
         }
@@ -213,13 +250,13 @@ repositories {
             includeGroup "maven.modrinth"
         }
     }
-
+*/
     mavenCentral()
 }
 
 dependencies {
 
-    compileOnly rfg.deobf(fileTree(dir: 'libs', include: '*.jar'))
+//    compileOnly rfg.deobf(fileTree(dir: 'libs', include: '*.jar'))
 
     if (propertyBool('use_modern_java_syntax')) {
         annotationProcessor 'com.github.bsideup.jabel:jabel-javac-plugin:1.0.0'
@@ -229,7 +266,7 @@ dependencies {
             transitive = false
         }
         // Allow jdk.unsupported classes like sun.misc.Unsafe, workaround for JDK-8206937 and fixes crashes in tests
-        patchedMinecraft 'me.eigenraven.java8unsupported:java-8-unsupported-shim:1.0.0'
+        //patchedMinecraft 'me.eigenraven.java8unsupported:java-8-unsupported-shim:1.0.0'
         // Include for tests
         testAnnotationProcessor 'com.github.bsideup.jabel:jabel-javac-plugin:1.0.0'
         testCompileOnly('com.github.bsideup.jabel:jabel-javac-plugin:1.0.0') {
@@ -239,6 +276,7 @@ dependencies {
     if (propertyBool('use_asset_mover')) {
         implementation "com.cleanroommc:assetmover:${propertyString('asset_mover_version')}"
     }
+/*
     if (propertyBool('use_mixins')) {
         String mixin = modUtils.enableMixins("zone.rong:mixinbooter:${propertyString('mixin_booter_version')}", propertyString('mixin_refmap'))
         api (mixin) {
@@ -251,10 +289,16 @@ dependencies {
             transitive = false
         }
     }
+*/
     if (propertyBool('enable_junit_testing')) {
         testImplementation 'org.junit.jupiter:junit-jupiter:5.7.1'
         testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     }
+
+    implementation fileTree(dir: 'C:\\Users\\884yu\\.gradle\\caches\\unimined\\\net\\minecraft\\minecraft\\1.12.2\\Cleanroom-FG3\\Cleanroom-FG3\\0.3.2-alpha\\mcp-39-1.12-official-8894774-searge-1.12.2-20250427.121127', include: 'forge-0.3.2-alpha-Cleanroom-FG3+cleanroom-0.3.2-alpha+fixForge-mcp+searge-at+3c5d61e-sources.jar')
+
+    compileOnly group: 'net.bytebuddy', name: 'byte-buddy-agent', version: '1.17.5'
+    compileOnly group: 'net.bytebuddy', name: 'byte-buddy', version: '1.17.5'
 
     implementation group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib', version: kotlin_version
     implementation group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib-jdk8', version: kotlin_version
@@ -265,16 +309,16 @@ dependencies {
     implementation group: 'com.charleskorn.kaml', name: 'kaml', version: kaml_version
     implementation "javax.xml.bind:jaxb-api:2.3.1"
     implementation "org.glassfish.jaxb:jaxb-runtime:2.3.1"
-    implementation 'org.projectlombok:lombok:1.18.20'
-    annotationProcessor 'org.projectlombok:lombok:1.18.20'
-   
+    compileOnly 'org.projectlombok:lombok:1.18.30'
+	annotationProcessor 'org.projectlombok:lombok:1.18.30'
+
     //implementation rfg.deobf("codechicken:CodeChickenLib:1.12-3.1.5.330:universal")
-    implementation rfg.deobf("curse.maven:the-one-probe-community-edition-885670:5485686")
-    compileOnly rfg.deobf("curse.maven:jei-238222:5101347")
+    implementation "curse.maven:the-one-probe-community-edition-885670:5485686"
+    compileOnly "curse.maven:jei-238222:5101347"
     compileOnly "com.mod-buildcraft:buildcraft-all:7.99.24.6:"
-    compileOnly rfg.deobf('net.industrial-craft:industrialcraft-2:2.8.222-ex112')
+    compileOnly 'net.industrial-craft:industrialcraft-2:2.8.222-ex112'
     //implementation rfg.deobf('curse.maven:HadEnoughItems-557549:5471944')
-    compileOnly rfg.deobf('curse.maven:EnderStorage-245174:2755787')
+    compileOnly 'curse.maven:EnderStorage-245174:2755787'
     //implementation rfg.deobf('li.cil.oc:OpenComputers:MC1.12.2-1.7.5.221')
     compileOnly 'cofh:CoFHCore:1.12.2-4.6.3.27:deobf'
     compileOnly 'cofh:RedstoneFlux:1.12-2.1.0.7:deobf'
@@ -283,9 +327,9 @@ dependencies {
     compileOnly group: 'cofh', name: 'ThermalDynamics', version: '1.12.2-2.5.5.21', classifier: 'deobf', transitive: false
     compileOnly group: 'cofh', name: 'ThermalExpansion', version: '1.12.2-5.5.4.43', classifier: 'deobf', transitive: false
 
-    compileOnly rfg.deobf('curse.maven:cc-tweaked-282001:2992872')
-    compileOnly rfg.deobf("curse.maven:storage-drawers-223852:5612980")
-    compileOnly rfg.deobf("curse.maven:charset-lib-284523:3656492")
+    compileOnly 'curse.maven:cc-tweaked-282001:2992872'
+    compileOnly "curse.maven:storage-drawers-223852:5612980"
+    compileOnly "curse.maven:charset-lib-284523:3656492"
 
     testImplementation 'org.jetbrains.kotlin:kotlin-test'
     testImplementation 'org.jetbrains.kotlin:kotlin-test-junit5'
@@ -295,6 +339,7 @@ dependencies {
 apply from: 'gradle/scripts/dependencies.gradle'
 
 // Adds Access Transformer files to tasks
+/*
 if (propertyBool('use_access_transformer')) {
     for (def location : propertyStringList('access_transformer_locations')) {
         def fileLocation = file("${projectDir}/src/main/resources/${location}")
@@ -306,9 +351,21 @@ if (propertyBool('use_access_transformer')) {
         }
     }
 }
+*/
 
 processResources {
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
+
+    inputs.property 'mod_id', propertyString('mod_id')
+    inputs.property 'mod_name', propertyString('mod_name')
+    inputs.property 'mod_version', propertyString('mod_version')
+    inputs.property 'mod_description', propertyString('mod_description')
+    inputs.property 'mod_authors', "${propertyStringList('mod_authors', ',').join(', ')}"
+    inputs.property 'mod_credits', propertyString('mod_credits')
+    inputs.property 'mod_url', propertyString('mod_url')
+    inputs.property 'mod_update_json', propertyString('mod_update_json')
+    inputs.property 'mod_logo_path', propertyString('mod_logo_path')
+
     def filterList = ['mcmod.info', 'pack.mcmeta']
     filterList.addAll(propertyStringList('mixin_configs').collect(config -> "mixins.${config}.json" as String))
 
@@ -327,36 +384,52 @@ processResources {
                 'mixin_package': propertyString('mixin_package')
         )
     }
-    
-    if (propertyBool('use_access_transformer')) {
-        rename '(.+_at.cfg)', 'META-INF/$1'
-    }
-
+    rename '(.+_at.cfg)', 'META-INF/$1'
 }
 
 jar {
     from sourceSets.api.output
-    duplicatesStrategy = DuplicatesStrategy.WARN
-    manifest {
-        def attribute_map = [:]
-        if (propertyBool('is_coremod')) {
-            attribute_map['FMLCorePlugin'] = propertyString('coremod_plugin_class_name')
-            if (propertyBool('coremod_includes_mod')) {
-                attribute_map['FMLCorePluginContainsFMLMod'] = true
-                def currentTasks = gradle.startParameter.taskNames
-                if (currentTasks[0] == 'build' || currentTasks[0] == 'prepareObfModsFolder' || currentTasks[0] == 'runObfClient') {
-                    attribute_map['ForceLoadAsMod'] = true
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    if (configurations.contain.size() > 0) {
+        into('/') {
+            from configurations.contain
+        }
+    }
+
+    doFirst{
+        manifest {
+            def attribute_map = [:]
+            attribute_map['ModType'] = "CRL"
+            if (configurations.contain.size() > 0) {
+                attribute_map['ContainedDeps'] = configurations.contain.collect { it.name }.join(' ')
+                attribute_map['NonModDeps'] = true
+            }
+            if (propertyBool('is_coremod')) {
+                attribute_map['FMLCorePlugin'] = propertyString('coremod_plugin_class_name')
+                if (propertyBool('coremod_includes_mod')) {
+                    attribute_map['FMLCorePluginContainsFMLMod'] = true
                 }
             }
+            if (propertyBool('use_access_transformer')) {
+                attribute_map['FMLAT'] = propertyString('access_transformer_locations')
+            }
+            attributes(attribute_map)
         }
-        if (propertyBool('use_access_transformer')) {
-            attribute_map['FMLAT'] = propertyString('access_transformer_locations')
-        }
-        attributes(attribute_map)
+    }
+
+    if (propertyBool('enable_shadow')) {
+        finalizedBy(shadowJar)
     }
     // Add all embedded dependencies into the jar
     from(provider{ configurations.embed.collect {it.isDirectory() ? it : zipTree(it)} })
 }
+
+/*
+shadowJar {
+    configurations = [project.configurations.shadow]
+    archiveClassifier = "shadow"
+}
+*/
 
 task sourceJar(type: Jar) {
     from sourceSets.api.allSource
@@ -364,46 +437,23 @@ task sourceJar(type: Jar) {
     archiveClassifier.set('sources')
 }
 
-idea {
-    module {
-        inheritOutputDirs = true
+tasks.remapJar {
+    doFirst {
+        logging.captureStandardOutput LogLevel.INFO
     }
-    project {
-        settings {
-            runConfigurations {
-                "1. Run Client"(Gradle) {
-                    taskNames = ["runClient"]
-                }
-                "2. Run Server"(Gradle) {
-                    taskNames = ["runServer"]
-                }
-                "3. Run Obfuscated Client"(Gradle) {
-                    taskNames = ["runObfClient"]
-                }
-                "4. Run Obfuscated Server"(Gradle) {
-                    taskNames = ["runObfServer"]
-                }
-            }
-            compiler.javac {
-                afterEvaluate {
-                    javacAdditionalOptions = "-encoding utf8"
-                    moduleJavacAdditionalOptions = [
-                            (project.name + ".main"): tasks.compileJava.options.compilerArgs.collect { '"' + it + '"' }.join(' ')
-                    ]
-                }
-            }
-        }
+    doLast {
+        logging.captureStandardOutput LogLevel.QUIET
     }
 }
 
 compileTestJava {
-    sourceCompatibility = targetCompatibility = 8
+    sourceCompatibility = targetCompatibility = JavaVersion.VERSION_21
 }
 
 test {
     useJUnitPlatform()
     javaLauncher.set(javaToolchains.launcherFor {
-        languageVersion = JavaLanguageVersion.of(8)
+        languageVersion = JavaLanguageVersion.of(21)
     })
     if (propertyBool('show_testing_output')) {
         testLogging {
@@ -448,10 +498,10 @@ tasks.withType(JavaCompile).configureEach {
         if (it.name in ['compileMcLauncherJava', 'compilePatchedMcJava']) {
             return
         }
-        sourceCompatibility = 17
-        options.release.set(8)
+        sourceCompatibility = 21
+        options.release.set(21)
         javaCompiler.set(javaToolchains.compilerFor {
-            languageVersion.set(JavaLanguageVersion.of(16))
+            languageVersion.set(JavaLanguageVersion.of(21))
             vendor.set(JvmVendorSpec.AZUL)
         })
     }
@@ -464,10 +514,11 @@ tasks.register('cleanroomAfterSync') {
 
 if (propertyBool('use_modern_java_syntax')) {
     tasks.withType(Javadoc).configureEach {
-        sourceCompatibility = 17
+        sourceCompatibility = 21
     }
 }
 
+/*
 tasks.named('injectTags', InjectTagsTask).configure {
     onlyIf {
         return propertyBool('use_tags') && !it.getTags().get().isEmpty()
@@ -475,10 +526,11 @@ tasks.named('injectTags', InjectTagsTask).configure {
     it.outputClassName.set(propertyString('tag_class_name'))
 }
 
+
 tasks.named('prepareObfModsFolder').configure {
     finalizedBy 'prioritizeCoremods'
 }
-
+*/
 tasks.named('sourcesJar').configure{
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
 }
@@ -494,10 +546,20 @@ tasks.register('prioritizeCoremods') {
     }
 }
 
-idea.project.settings {
-    taskTriggers {
-        afterSync 'cleanroomAfterSync'
+def generateReferenceClass() {
+    var target = new File("${rootProject.projectDir}/src/main/java/${root_package.replace('.', '/')}/${mod_id}/Reference.java")
+    var template = new File("${rootProject.projectDir}/template/Reference.java")
+    var replaceMap = [$package : "${root_package}.${mod_id}", $mod_id : mod_id, $mod_name : mod_name, $mod_version : mod_version]
+    target.withWriter { var writer ->
+        template.eachLine { var line ->
+            replaceMap.each {if (line.contains(it.key)) line = line.replace(it.key, it.value)}
+            writer.write(line + "\n");
+        }
     }
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
 }
 
 apply from: 'gradle/scripts/publishing.gradle'
