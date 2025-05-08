@@ -138,8 +138,9 @@ project.afterEvaluate {
 unimined.minecraft {
     version "1.12.2"
     mappings {
-        mcp("stable", "39-1.12")
-    }
+        mcp("stable","39-1.12")
+        }
+
 
     cleanroom {
         if (propertyBool('use_access_transformer')) {
@@ -173,6 +174,7 @@ repositories {
     maven {url "https://maven.cil.li/"}
     maven {url "https://modmaven.dev/"}
     maven {url "https://maven.blamejared.com/"}
+    maven {url "https://nexus.velocitypowered.com/repository/maven-public/"}
 
 
 
@@ -213,7 +215,7 @@ dependencies {
     if (propertyBool('use_asset_mover')) {
         implementation "com.cleanroommc:assetmover:${propertyString('asset_mover_version')}"
     }
-
+/*
     if (propertyBool('use_mixins')) {
         String mixin = modUtils.enableMixins("zone.rong:mixinbooter:${propertyString('mixin_booter_version')}", propertyString('mixin_refmap'))
         api (mixin) {
@@ -226,7 +228,7 @@ dependencies {
             transitive = false
         }
     }
-
+*/
     if (propertyBool('enable_junit_testing')) {
         testImplementation 'org.junit.jupiter:junit-jupiter:5.7.1'
         testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
