@@ -1,7 +1,6 @@
 /**
  * It is advised that you do not edit anything in the build.gradle; unless you are sure of what you are doing
  */
-//import com.gtnewhorizons.retrofuturagradle.mcp.InjectTagsTask
 import org.jetbrains.changelog.Changelog
 import org.jetbrains.gradle.ext.Gradle
 
@@ -13,13 +12,9 @@ plugins {
     id 'org.jetbrains.kotlin.plugin.serialization' version "$kotlin_version"
     id 'org.jetbrains.kotlin.plugin.lombok' version "$kotlin_version"
     id 'org.jetbrains.gradle.plugin.idea-ext' version '1.1.7'
-//    id 'com.gtnewhorizons.retrofuturagradle' version '1.3.35'
-//    id 'com.matthewprenger.cursegradle' version '1.4.0' apply false
-//    id 'com.modrinth.minotaur' version '2.+' apply false
     id 'org.jetbrains.changelog' version '2.2.0'
     id 'xyz.wagyourtail.unimined' version '1.3.14'
     id 'net.kyori.blossom' version '2.1.0'
-//    id "net.bytebuddy.byte-buddy-gradle-plugin" version "1.17.5"
 }
 
 apply from: 'gradle/scripts/helpers.gradle'
@@ -64,7 +59,6 @@ configurations {
     embed
     contain
     implementation.extendsFrom(embed)
-//    implementation.extendsFrom(contain)
     testCompileOnly.extendsFrom compileOnly
     ktlint
     resolveable.extendsFrom(implementation).canBeResolved(true)
@@ -143,7 +137,6 @@ project.afterEvaluate {
 
 unimined.minecraft {
     version "1.12.2"
-//    side "combined"
     mappings {
         mcp("stable", "39-1.12")
     }
@@ -168,42 +161,6 @@ unimined.minecraft {
         }
     }
 }
-
-/*
-minecraft {
-    mcVersion.set('1.12.2')
-
-    mcpMappingChannel.set(propertyString('mapping_channel'))
-    mcpMappingVersion.set(propertyString('mapping_version'))
-
-    useDependencyAccessTransformers.set(propertyBool('use_dependency_at_files'))
-
-    username.set(propertyString('minecraft_username'))
-
-    // Add any additional tweaker classes here
-    extraTweakClasses.addAll(propertyStringList('extra_tweak_classes'))
-
-    // Add various JVM arguments here for runtime
-    def args = ['-ea:' + group]
-    if (propertyBool('use_mixins')) {
-        args << '-Dmixin.hotSwap=true'
-        args << '-Dmixin.checks.interfaces=true'
-        args << '-Dmixin.debug.export=true'
-    }
-    extraRunJvmArguments.addAll(args)
-    extraRunJvmArguments.addAll(propertyStringList('extra_jvm_args'))
-
-    if (propertyBool('use_tags')) {
-        if (file('tags.properties').exists()) {
-            Properties props = new Properties().tap {  it.load(file('tags.properties').newInputStream()); it }
-            if (!props.isEmpty()) {
-                injectedTags.set(props.collectEntries { k, v -> [(k): interpolate(v)] })
-            }
-        }
-    }
-}
-*/
-
 
 repositories {
     maven {
@@ -233,30 +190,10 @@ repositories {
         name "tterrag" //EnderCore
         url "https://maven.tterrag.com/"
     }
-/*
-    maven {
-        url "http://maven.amadornes.com/"
-        allowInsecureProtocol = true
-        }
-
-    exclusiveContent {
-        forRepository {
-            maven {
-                name = "Modrinth"
-                url = "https://api.modrinth.com/maven"
-            }
-        }
-        filter {
-            includeGroup "maven.modrinth"
-        }
-    }
-*/
     mavenCentral()
 }
 
 dependencies {
-
-//    compileOnly rfg.deobf(fileTree(dir: 'libs', include: '*.jar'))
 
     if (propertyBool('use_modern_java_syntax')) {
         annotationProcessor 'com.github.bsideup.jabel:jabel-javac-plugin:1.0.0'
@@ -276,7 +213,7 @@ dependencies {
     if (propertyBool('use_asset_mover')) {
         implementation "com.cleanroommc:assetmover:${propertyString('asset_mover_version')}"
     }
-/*
+
     if (propertyBool('use_mixins')) {
         String mixin = modUtils.enableMixins("zone.rong:mixinbooter:${propertyString('mixin_booter_version')}", propertyString('mixin_refmap'))
         api (mixin) {
@@ -289,13 +226,11 @@ dependencies {
             transitive = false
         }
     }
-*/
+
     if (propertyBool('enable_junit_testing')) {
         testImplementation 'org.junit.jupiter:junit-jupiter:5.7.1'
         testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
     }
-
-    implementation fileTree(dir: 'C:\\Users\\884yu\\.gradle\\caches\\unimined\\\net\\minecraft\\minecraft\\1.12.2\\Cleanroom-FG3\\Cleanroom-FG3\\0.3.2-alpha\\mcp-39-1.12-official-8894774-searge-1.12.2-20250427.121127', include: 'forge-0.3.2-alpha-Cleanroom-FG3+cleanroom-0.3.2-alpha+fixForge-mcp+searge-at+3c5d61e-sources.jar')
 
     compileOnly group: 'net.bytebuddy', name: 'byte-buddy-agent', version: '1.17.5'
     compileOnly group: 'net.bytebuddy', name: 'byte-buddy', version: '1.17.5'
