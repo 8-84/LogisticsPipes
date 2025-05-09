@@ -49,8 +49,8 @@ import net.minecraft.client.gui.GuiConfirmOpenLink
 import net.minecraft.client.gui.GuiScreen
 import net.minecraft.client.renderer.GlStateManager
 import net.minecraft.item.ItemStack
-import network.rs485.logisticspipes.gui.HorizontalAlignment
 import network.rs485.logisticspipes.gui.GuiDrawer
+import network.rs485.logisticspipes.gui.HorizontalAlignment
 import network.rs485.logisticspipes.gui.VerticalAlignment
 import network.rs485.logisticspipes.gui.widget.Tooltipped
 import network.rs485.logisticspipes.guidebook.BookContents
@@ -60,8 +60,8 @@ import network.rs485.logisticspipes.guidebook.ItemGuideBook
 import network.rs485.logisticspipes.util.cycleMinecraftColorId
 import network.rs485.logisticspipes.util.math.MutableRectangle
 import network.rs485.markdown.TextFormat
-import org.lwjgl.input.Mouse
 import org.lwjgl.opengl.GL11
+import org.lwjglx.input.Mouse
 import java.net.URI
 import java.net.URISyntaxException
 import java.util.*
@@ -134,6 +134,8 @@ class GuiGuideBook(private val state: ItemGuideBook.GuideBookState) : GuiScreen(
     private val actionListener = ActionListener()
 
     private var currentProgress: Float = state.currentPage.progress
+
+    private var clickedLinkURI: URI? = null
 
     inner class ActionListener {
         fun onMenuButtonClick(newPage: String) = changePage(newPage)
@@ -307,7 +309,7 @@ class GuiGuideBook(private val state: ItemGuideBook.GuideBookState) : GuiScreen(
     override fun doesGuiPauseGame() = false
 
     override fun mouseClicked(mouseX: Int, mouseY: Int, mouseButton: Int) {
-        val allButtons = (buttonList + tabButtons).sortedBy { it.zLevel }.filter { it.visible && it.enabled }
+        val allButtons = (buttonList + tabButtons)/*.sortedBy { it.zLevel }*/.filter { it.visible && it.enabled }
         for (button in allButtons) {
             if (button.mousePressed(mc, mouseX, mouseY)) {
                 selectedButton = button

@@ -130,15 +130,15 @@ abstract class BaseGuiContainer(
         drawForegroundLayer(floatMouseX, floatMouseY, partialTicks)
         RenderHelper.disableStandardItemLighting()
         fuzzySelector?.let { fuzzySelector ->
-            if (hoveredSlot == null && fuzzySelector.active && !fuzzySelector.isMouseHovering(
+            if (slotUnderMouse == null && fuzzySelector.active && !fuzzySelector.isMouseHovering(
                     floatMouseX,
                     floatMouseY,
                 )
             ) {
                 fuzzySelector.active = false
                 fuzzySelector.currentSlot = null
-            } else if (hoveredSlot != null && hoveredSlot != fuzzySelector.currentSlot && hoveredSlot is FuzzyItemSlot) {
-                val slot = hoveredSlot as FuzzyItemSlot
+            } else if (slotUnderMouse != null && slotUnderMouse != fuzzySelector.currentSlot && slotUnderMouse is FuzzyItemSlot) {
+                val slot = slotUnderMouse as FuzzyItemSlot
                 fuzzySelector.active = true
                 fuzzySelector.currentSlot = slot
                 fuzzySelector.setPos(guiLeft + slot.xPos, guiTop + slot.yPos + 17)

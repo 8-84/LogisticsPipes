@@ -3,18 +3,23 @@
  */
 import org.jetbrains.changelog.Changelog
 import org.jetbrains.gradle.ext.Gradle
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
     id 'java'
     id 'java-library'
     id 'maven-publish'
-    id 'org.jetbrains.kotlin.jvm' version "$kotlin_version"
-    id 'org.jetbrains.kotlin.plugin.serialization' version "$kotlin_version"
-    id 'org.jetbrains.kotlin.plugin.lombok' version "$kotlin_version"
-    id 'org.jetbrains.gradle.plugin.idea-ext' version '1.1.7'
+    id 'org.jetbrains.kotlin.jvm' version '2.0.20'
+    id 'org.jetbrains.kotlin.plugin.serialization' version '2.0.20'
+    id 'org.jetbrains.kotlin.plugin.lombok' version '2.0.20'
+    id 'org.jetbrains.gradle.plugin.idea-ext' version '1.1.10'
     id 'org.jetbrains.changelog' version '2.2.0'
     id 'xyz.wagyourtail.unimined' version '1.3.14'
     id 'net.kyori.blossom' version '2.1.0'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
+
+    id 'com.dorongold.task-tree' version '2.1.1'
+
 }
 
 apply from: 'gradle/scripts/helpers.gradle'
@@ -29,22 +34,22 @@ if (propertyBool('generate_reference_class')) {
     generateReferenceClass()
 }
 
-assertSubProperties 'use_tags', 'tag_class_name'
+//assertSubProperties 'use_tags', 'tag_class_name'
 assertSubProperties 'use_access_transformer', 'access_transformer_locations'
-assertSubProperties 'use_mixins', 'mixin_booter_version', 'mixin_refmap'
+//assertSubProperties 'use_mixins', 'mixin_booter_version', 'mixin_refmap'
 assertSubProperties 'is_coremod', 'coremod_includes_mod', 'coremod_plugin_class_name'
 assertSubProperties 'use_asset_mover', 'asset_mover_version'
 
-setDefaultProperty 'use_modern_java_syntax', false, false
+//setDefaultProperty 'use_modern_java_syntax', false, false
 setDefaultProperty 'generate_sources_jar', true, false
 setDefaultProperty 'generate_javadocs_jar', true, false
-setDefaultProperty 'mapping_channel', true, 'stable'
-setDefaultProperty 'mapping_version', true, '39'
-setDefaultProperty 'use_dependency_at_files', true, true
+//setDefaultProperty 'mapping_channel', true, 'stable'
+//setDefaultProperty 'mapping_version', true, '39'
+//setDefaultProperty 'use_dependency_at_files', true, true
 setDefaultProperty 'minecraft_username', true, 'Developer'
 setDefaultProperty 'extra_jvm_args', false, ''
-setDefaultProperty 'extra_tweak_classes', false, ''
-setDefaultProperty 'change_minecraft_sources', false, false
+//setDefaultProperty 'extra_tweak_classes', false, ''
+//setDefaultProperty 'change_minecraft_sources', false, false
 
 version = propertyString('mod_version')
 group = propertyString('root_package')
@@ -64,47 +69,17 @@ configurations {
     resolveable.extendsFrom(implementation).canBeResolved(true)
 }
 
-sourceSets {
-    api {
-        java {
-            srcDirs = ['src/api/java']
-        }
-    }
-    dummy {
-        compileClasspath += main.compileClasspath
-        runtimeClasspath += main.runtimeClasspath
-
-        java {
-            srcDirs = ['dummy/src/main/java']
-        }
-    }
-    main {
-        compileClasspath += dummy.output
-        compileClasspath += api.output
-        runtimeClasspath += api.output
-
-        java {
-            srcDirs += 'common'
-        }
-        resources {
-            srcDirs += 'resources'
-        }
-    }
-    test {
-        compileClasspath += dummy.output
-        compileClasspath += api.output
-        runtimeClasspath += api.output
-        compileClasspath += main.compileClasspath
-        runtimeClasspath += main.runtimeClasspath
-    }
-}
-
-tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+tasks.withType(KotlinCompile).configureEach {
     kotlinOptions {
-        languageVersion = "2.1"
+        languageVersion = "2.0"
         jvmTarget = '21'
         freeCompilerArgs += "-Xjvm-default=all"
     }
+}
+
+
+kotlin {
+    jvmToolchain(21)
 }
 
 kotlinLombok {
@@ -137,10 +112,8 @@ project.afterEvaluate {
 
 unimined.minecraft {
     version "1.12.2"
-    mappings {
-        mcp("stable","39-1.12")
-        }
-
+    mappings {mcp("stable","39-1.12")}
+//    accessTransformer "${rootProject.projectDir}/src/main/resources/" +  propertyString('access_transformer_locations')
 
     cleanroom {
         if (propertyBool('use_access_transformer')) {
@@ -176,8 +149,6 @@ repositories {
     maven {url "https://maven.blamejared.com/"}
     maven {url "https://nexus.velocitypowered.com/repository/maven-public/"}
 
-
-
     maven {
         url "https://cursemaven.com"
         content {
@@ -195,7 +166,26 @@ repositories {
     mavenCentral()
 }
 
+configurations.all {
+    resolutionStrategy.eachDependency { details ->
+        if (details.requested.group == 'org.jetbrains.kotlin') {
+            details.useVersion '2.0.20'
+        }
+    }
+}
+
+tasks.register('printClasspath') {
+    doLast {
+        println "Classpath:"
+        sourceSets.dummy.compileClasspath.each { println it }
+    }
+}
+
+
 dependencies {
+
+    runtimeOnly "org.jetbrains.kotlin:kotlin-compiler-embeddable:2.0.0"
+
 
     if (propertyBool('use_modern_java_syntax')) {
         annotationProcessor 'com.github.bsideup.jabel:jabel-javac-plugin:1.0.0'
@@ -238,7 +228,7 @@ dependencies {
     compileOnly group: 'net.bytebuddy', name: 'byte-buddy', version: '1.17.5'
 
     implementation group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib', version: kotlin_version
-    implementation group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib-jdk8', version: kotlin_version
+    implementation group: "org.jetbrains.kotlin", name: "kotlin-reflect", version: kotlin_version
     implementation group: 'org.jetbrains', name: 'annotations', version: kannotations_version
     implementation group: 'org.jetbrains.kotlinx', name: 'kotlinx-coroutines-core', version: kcoroutines_version
     implementation group: 'org.jetbrains.kotlinx', name: 'kotlinx-coroutines-jdk8', version: kcoroutines_version
@@ -249,20 +239,23 @@ dependencies {
     compileOnly 'org.projectlombok:lombok:1.18.30'
 	annotationProcessor 'org.projectlombok:lombok:1.18.30'
 
-    //implementation rfg.deobf("codechicken:CodeChickenLib:1.12-3.1.5.330:universal")
+    implementation(fileTree(dir: 'libs', include: ['*.jar']))
+
+    implementation "codechicken:CodeChickenLib:1.12-3.1.5.330:universal"
     implementation "curse.maven:the-one-probe-community-edition-885670:5485686"
     compileOnly "curse.maven:jei-238222:5101347"
     compileOnly "com.mod-buildcraft:buildcraft-all:7.99.24.6:"
     compileOnly 'net.industrial-craft:industrialcraft-2:2.8.222-ex112'
-    //implementation rfg.deobf('curse.maven:HadEnoughItems-557549:5471944')
+    implementation 'curse.maven:HadEnoughItems-557549:5471944'
     compileOnly 'curse.maven:EnderStorage-245174:2755787'
-    //implementation rfg.deobf('li.cil.oc:OpenComputers:MC1.12.2-1.7.5.221')
+    implementation 'li.cil.oc:OpenComputers:MC1.12.2-1.7.5.221'
     compileOnly 'cofh:CoFHCore:1.12.2-4.6.3.27:deobf'
     compileOnly 'cofh:RedstoneFlux:1.12-2.1.0.7:deobf'
     compileOnly group: 'cofh', name: 'ThermalFoundation', version: '1.12.2-2.6.3.27', classifier: 'deobf', transitive: false
     compileOnly group: 'cofh', name: 'CoFHWorld', version: '1.12.2-1.2.0.5', classifier: 'deobf', transitive: false
     compileOnly group: 'cofh', name: 'ThermalDynamics', version: '1.12.2-2.5.5.21', classifier: 'deobf', transitive: false
     compileOnly group: 'cofh', name: 'ThermalExpansion', version: '1.12.2-5.5.4.43', classifier: 'deobf', transitive: false
+    implementation "curse.maven:mcmultipart-239431:2615930"
 
     compileOnly 'curse.maven:cc-tweaked-282001:2992872'
     compileOnly "curse.maven:storage-drawers-223852:5612980"
@@ -274,21 +267,6 @@ dependencies {
 }
 
 apply from: 'gradle/scripts/dependencies.gradle'
-
-// Adds Access Transformer files to tasks
-/*
-if (propertyBool('use_access_transformer')) {
-    for (def location : propertyStringList('access_transformer_locations')) {
-        def fileLocation = file("${projectDir}/src/main/resources/${location}")
-        if (fileLocation.exists()) {
-            tasks.deobfuscateMergedJarToSrg.accessTransformerFiles.from(fileLocation)
-            tasks.srgifyBinpatchedJar.accessTransformerFiles.from(fileLocation)
-        } else {
-            throw new GradleException("Access Transformer file [$fileLocation] does not exist!")
-        }
-    }
-}
-*/
 
 processResources {
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
@@ -322,6 +300,43 @@ processResources {
         )
     }
     rename '(.+_at.cfg)', 'META-INF/$1'
+}
+
+sourceSets {
+    api {
+        compileClasspath += sourceSets.main.compileClasspath
+        runtimeClasspath += sourceSets.main.runtimeClasspath
+        java {srcDirs = ['src/api/java']}
+        kotlin{srcDirs = ['src/api/kotlin']}
+    }
+    dummy {
+        compileClasspath += sourceSets.main.compileClasspath
+        runtimeClasspath += sourceSets.main.runtimeClasspath
+        java {srcDirs = ['dummy/src/main/java']}
+    }
+
+    main {
+        compileClasspath += sourceSets.main.compileClasspath
+        runtimeClasspath += sourceSets.main.runtimeClasspath
+        compileClasspath += dummy.output
+        compileClasspath += api.output
+        runtimeClasspath += api.output
+        runtimeClasspath += dummy.output
+
+        java {srcDirs += ['common']}
+        resources {srcDirs += 'resources'}
+    }
+
+    test {
+        compileClasspath += dummy.output
+        runtimeClasspath += dummy.output
+        compileClasspath += api.output
+        runtimeClasspath += api.output
+        compileClasspath += sourceSets.main.compileClasspath
+        runtimeClasspath += sourceSets.main.runtimeClasspath
+        compileClasspath += main.output
+        runtimeClasspath += main.output
+    }
 }
 
 jar {
@@ -361,14 +376,41 @@ jar {
     from(provider{ configurations.embed.collect {it.isDirectory() ? it : zipTree(it)} })
 }
 
-/*
 shadowJar {
+    from sourceSets.api.output
+
+    archiveClassifier.set('')
+
     configurations = [project.configurations.shadow]
     archiveClassifier = "shadow"
-}
-*/
 
-task sourceJar(type: Jar) {
+
+    dependencies {
+        include(dependency(group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib', version: kotlin_version))
+        include(dependency(group: 'org.jetbrains.kotlin', name: 'kotlin-stdlib-jdk8', version: kotlin_version))
+        include(dependency(group: 'org.jetbrains', name: 'annotations', version: kannotations_version))
+        include(dependency(group: 'org.jetbrains.kotlinx', name: 'kotlinx-coroutines-core-jvm', version: kcoroutines_version))
+        include(dependency(group: 'org.jetbrains.kotlinx', name: 'kotlinx-coroutines-jdk8', version: kcoroutines_version))
+        include(dependency(group: 'org.jetbrains.kotlinx', name: 'kotlinx-serialization-json-jvm', version: kserialization_version))
+        include(dependency(group: 'org.jetbrains.kotlinx', name: 'kotlinx-serialization-core-jvm', version: kserialization_version))
+        include(dependency(group: 'com.charleskorn.kaml', name: 'kaml-jvm', version: kaml_version))
+        include(dependency(group: 'org.snakeyaml', name: 'snakeyaml-engine', version: '2.3'))
+    }
+
+    relocate 'kotlin', 'logisticspipes.kotlin'
+    relocate 'kotlinx', 'logisticspipes.kotlinx'
+    relocate 'org.intellij', 'logisticspipes.intellij'
+    relocate 'org.jetbrains', 'logisticspipes.jetbrains'
+    relocate 'org.snakeyaml', 'logisticspipes.snakeyaml'
+    relocate 'com.charleskorn.kaml', 'logisticspipes.kaml'
+
+    exclude 'META-INF/versions/9/*'
+    exclude 'DebugProbesKt.bin'
+
+}
+
+
+tasks.register('sourceJar', Jar) {
     from sourceSets.api.allSource
     from sourceSets.main.allSource
     archiveClassifier.set('sources')
@@ -498,6 +540,7 @@ def generateReferenceClass() {
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
 }
+
 
 apply from: 'gradle/scripts/publishing.gradle'
 apply from: 'gradle/scripts/extra.gradle'
